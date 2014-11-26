@@ -9,7 +9,7 @@ class Acceptor;
 typedef std::shared_ptr<Acceptor> AcceptorPtr;
 
 class SockStream;
-class Acceptor : public Handler, public std::enable_shared_from_this<Acceptor>
+class Acceptor : public Handler
 {
   private:
     Acceptor(ReactorPtr acceptor_reactor, ReactorPtr session_reactor);
@@ -22,17 +22,12 @@ class Acceptor : public Handler, public std::enable_shared_from_this<Acceptor>
 
     static AcceptorPtr create(ReactorPtr acceptor_reactor, ReactorPtr session_reactor) {return AcceptorPtr(new Acceptor(acceptor_reactor, session_reactor)); }
 
-    AcceptorPtr get_ptr() 
-    {
-      return shared_from_this();
-    }
-
     void open();
 
     void accept(SockStream& stream);
     void close();
 
-    void handle_input();
+    State handle_input();
 
     int get_handle() const { return socket_; }
 
@@ -41,6 +36,8 @@ class Acceptor : public Handler, public std::enable_shared_from_this<Acceptor>
 
     ReactorPtr acceptor_reactor_;
     ReactorPtr session_reactor_;
+
+    unsigned int timeout_;
 };
 
 

@@ -24,7 +24,8 @@ Acceptor::~Acceptor()
 
 Acceptor::Acceptor(ReactorPtr acceptor_reactor, ReactorPtr session_reactor) : 
   acceptor_reactor_(acceptor_reactor),
-  session_reactor_(session_reactor)
+  session_reactor_(session_reactor),
+  timeout_(3)
 {
 }
 
@@ -42,6 +43,7 @@ void Acceptor::open()
     throw exception("Can't set socket options");
   }
   
+  
   sockaddr_in serveraddr;
   serveraddr.sin_family = AF_INET;
   serveraddr.sin_addr.s_addr = INADDR_ANY;
@@ -57,8 +59,15 @@ void Acceptor::open()
   {
     throw exception("Can't listen on the socket");
   }
+  struct timeval tv;
+  
+  tv.tv_sec = timeout_;
+  tv.tv_usec = 0;
+  
+  setsockopt(socket_, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,sizeof(struct timeval));
 
-  acceptor_reactor_->register_handler(this->get_ptr());
+//  acceptor_reactor_->register_handler(this->get_ptr());
+  acceptor_reactor_->register_handler(shared_from_this());
 }
 
 void Acceptor::accept(SockStream& stream)
@@ -66,6 +75,7 @@ void Acceptor::accept(SockStream& stream)
   int socket;
   struct sockaddr_in clientaddr;
   unsigned int addrlen = sizeof(clientaddr);
+  
   if((socket = ::accept(socket_, (struct sockaddr *)&clientaddr, &addrlen)) == -1)
   {
     throw exception("Can't accept connection");
@@ -79,9 +89,9 @@ void Acceptor::close()
 
 }
 
-void Acceptor::handle_input()
+State Acceptor::handle_input()
 {
-  DEBUG("acceptor handle input");
+//  DEBUG("acceptor handle input");
 
   SessionPtr session(new Session());
 
@@ -89,5 +99,6 @@ void Acceptor::handle_input()
 
   session_reactor_->register_handler(session);
   
-  DEBUG("accepted");
+  return State::RESUME;
+//  DEBUG("accepted");
 }

@@ -27,31 +27,20 @@ SockStream::SockStream() : socket_(0)
 //  }
 }
 
-void SockStream::read(std::vector<char>& result)
+int SockStream::recv(void* buf, size_t len, unsigned int timeout)
 {
-  int nbytes;
-
-  if((nbytes = recv(socket_, buff_, sizeof(buff_), 0)) <= 0)
-  {
-    if(nbytes == 0) 
-    {
-      //shutdown
-      return;
-    }
-    else 
-    {
-      throw exception("Can't read from the socket");
-    }
-
-    return;
-  }
+  struct timeval tv;
   
-  result.insert(result.end(), buff_, buff_ + nbytes);
+  tv.tv_sec = timeout;
+  tv.tv_usec = 0;
+  
+  ::setsockopt(socket_, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,sizeof(struct timeval));
+  
+  return ::recv(socket_, buf, len, 0);
 }
 
-void SockStream::write(const std::string& buff)
+int SockStream::send(const void* buf, size_t len)
 {
-  if(send(socket_, buff.c_str(), buff.size(), 0) == -1)
-    throw exception("Can't write to the socket");
+  return ::send(socket_, buf, len, 0);
 }
 

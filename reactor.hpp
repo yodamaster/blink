@@ -19,6 +19,8 @@ class Reactor
     void register_handler(HandlerPtr handler);
     
     void resume_handler(HandlerPtr handler);
+    
+    void remove_handler(HandlerPtr handler);
 
     void handle_events();
   
